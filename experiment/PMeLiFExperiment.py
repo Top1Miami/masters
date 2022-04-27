@@ -48,7 +48,7 @@ class PMeLiFExperiment(Experiment):
         self.save_path = save_path
 
     def run(self, features, labels, file_name):
-        file_number = file_name[:-4]
+        file_number = file_name[:-4][-1:]
         df = pd.read_csv('../results/' + file_number + '/selected_features/sel_features.csv')
         known_features = [int(i) for i in
                           df.loc[df['filter_name'] == self.known_features_filter]

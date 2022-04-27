@@ -1,8 +1,3 @@
-import math
-import os
-
-import matplotlib.pyplot as plt
-
 # x = [[10, 20], [2, 3]]
 #
 # fig = plt.figure(figsize=(8, 5))
@@ -11,17 +6,11 @@ import matplotlib.pyplot as plt
 # fig.subplots_adjust(top=0.95, bottom=0.15)
 # plt.plot(x, marker='o')
 # plt.show()
-import numpy as np
-from matplotlib.colors import Colormap
-
-from utils import select_k_best_abs
 
 # x = np.array([1, 7, 10, 3, 4, -10, 1, -3, -5, -9])
 # print(x)
 # print(x[np.argsort(x)[::-1]])
 # print(x[select_k_best_abs(4)(x)])
-
-import pandas as pd
 
 #
 # data = [[1, 2, 3], [4, 5, 6]]
@@ -47,13 +36,17 @@ import pandas as pd
 # df = pd.DataFrame(tt, columns=['x', 'y', 'z', 'a'])
 # print(df)
 
-import seaborn as sns
+# import seaborn as sns
+#
+# x = [[1, 2, 4], [2, 3, 4], [1, 3, 4], [2, 4, 4], [1, 1, 5], [2, 2, 5], [1, 4, 5], [2, 5, 5]]
+#
+# df = pd.DataFrame(data=x, columns=['x', 'y', 'model'])
+# sns.lineplot(x='x', y='y', hue='model',
+#              data=df, ci='sd', palette=['red', 'blue'])
+# plt.grid()
+#
+# plt.show()
 
-x = [[1, 2, 4], [2, 3, 4], [1, 3, 4], [2, 4, 4], [1, 1, 5], [2, 2, 5], [1, 4, 5], [2, 5, 5]]
 
-df = pd.DataFrame(data=x, columns=['x', 'y', 'model'])
-sns.lineplot(x='x', y='y', hue='model',
-             data=df, ci='sd', palette=['red', 'blue'])
-plt.grid()
-
-plt.show()
+x = 'heh/kek/4.csv'
+print(x[:-4][-1:])
