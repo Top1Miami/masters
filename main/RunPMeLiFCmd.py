@@ -19,12 +19,14 @@ parser.add_argument('-sp', '--save_path',
                     help='save path, f.e. ../results/{0}/pmelif_plots/')
 parser.add_argument('-b', '--baseline',
                     dest='baseline',
-                    help='baseline filter, f.e. pearson')
+                    help='baseline filter, f.e. pearson',
+                    default='pearson')
 parser.add_argument('-mf', '--melif_filters', nargs='+',
                     help='melif filters, possible list: GiniIndex, SymmetricUncertainty, SpearmanCorr, PearsonCorr, FechnerCorr'
                          'Chi2, Anova, Relief')
 parser.add_argument('-mfs', '--max_features_select',
-                    help='max features to select')
+                    help='max features to select',
+                    default=10)
 print(sys.argv)
 
 args = parser.parse_args()
