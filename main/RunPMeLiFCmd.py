@@ -1,5 +1,6 @@
 import sys
 from argparse import ArgumentParser
+sys.path.insert(1, '/Users/dmitriish/PycharmProjects/masters/')
 
 import numpy as np
 from ITMO_FS import UnivariateFilter
