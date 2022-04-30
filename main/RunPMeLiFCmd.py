@@ -1,12 +1,13 @@
 import sys
 from argparse import ArgumentParser
-sys.path.insert(1, '/Users/dmitriish/PycharmProjects/masters/')
 
 import numpy as np
 from ITMO_FS import UnivariateFilter
 
 from experiment import PMeLiFExperiment
 from pipeline import SingleRunPipeline
+
+# sys.path.insert(1, '/Users/dmitriish/PycharmProjects/masters/')
 
 parser = ArgumentParser()
 parser.add_argument('-f', '--file',
@@ -32,7 +33,7 @@ print(sys.argv)
 
 args = parser.parse_args()
 file_name = args.filename
-numer_samples = int(args.number_samples)
+number_samples = int(args.number_samples)
 save_path = args.save_path
 baseline = args.baseline
 melif_filters = args.melif_filters
@@ -48,5 +49,5 @@ for i in range(0, len(filters)):
 points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
 # example of save_path '../results/{0}/pmelif_plots/'
-experiment = PMeLiFExperiment(numer_samples, baseline, filters, 10, save_path, points=points, delta=0.1)
+experiment = PMeLiFExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.1)
 pipeline.run(experiment)

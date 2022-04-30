@@ -69,6 +69,8 @@ class PMeLiFExperiment(Experiment):
 
             train_joined_features = PMeLiFExperiment.join_features(train_other_features, train_known_features)
             test_joined_features = PMeLiFExperiment.join_features(test_other_features, test_known_features)
+            print('Number of joined train features {0}, test {1}'.format(len(train_joined_features),
+                                                                         len(test_joined_features)))
 
             train_mapping = PMeLiFExperiment.generate_mapping(train_joined_features, train_known_features)
             test_mapping = PMeLiFExperiment.generate_mapping(test_joined_features, test_known_features)
@@ -76,6 +78,10 @@ class PMeLiFExperiment(Experiment):
             train_scoring = PMeLiFExperiment.feature_rec_wrapper(train_mapping, train_known_features)
             test_scoring = PMeLiFExperiment.feature_rec_wrapper(test_mapping, test_known_features)
 
+            train_x = features[sample_indices_object][:, train_joined_features]
+            test_x = features[sample_indices_object][:, test_joined_features]
+            y = labels[sample_indices_object]
+            print('Shape of train x {0}, test x {1}, y {2}'.format(train_x.shape, test_x.shape, y.shape))
             for features_select in range(1, self.max_features_select + 1):
                 # run pmelif
                 pmelif = PMeLiF(LinearRegression(),
@@ -83,35 +89,30 @@ class PMeLiFExperiment(Experiment):
                                 select_k_best_abs(features_select), self.ensemble,
                                 mode=PMeLiF.Mode.PMELIF, points=self.points, delta=self.delta)
 
-                pmelif.fit(features[sample_indices_object][:, train_joined_features], labels[sample_indices_object])
-                pmelif_score_matrix = pmelif.pmelif_transform(
-                    features[sample_indices_object][:, test_joined_features],
-                    labels[sample_indices_object])
-                pmelif_selected_features = select_k_best_abs(len(known_features) - self.known_train_features)(
-                    pmelif_score_matrix)
+                pmelif.fit(train_x, y)
+                pmelif_score_matrix = pmelif.pmelif_transform(test_x, y)
 
+                pmelif_selected_features = select_k_best_abs(features_select)(pmelif_score_matrix)
                 pmelif_score = test_scoring(pmelif_selected_features)
-                accumulated_info.append([pmelif_score, features_select, 'pmelif'])
 
+                accumulated_info.append([pmelif_score, features_select, 'pmelif'])
                 # run melif
                 melif = PMeLiF(SVC(), 'f1_macro', select_k_best_abs(features_select), self.ensemble,
                                mode=PMeLiF.Mode.MELIF, points=self.points, delta=self.delta)
 
-                melif.fit(features[sample_indices_object][:, train_joined_features], labels[sample_indices_object])
-                melif_score_matrix = melif.pmelif_transform(
-                    features[sample_indices_object][:, test_joined_features],
-                    labels[sample_indices_object])
-                melif_selected_features = select_k_best_abs(len(known_features) - self.known_train_features)(
-                    melif_score_matrix)
+                melif.fit(train_x, y)
+                melif_score_matrix = melif.pmelif_transform(test_x, y)
 
+                melif_selected_features = select_k_best_abs(features_select)(melif_score_matrix)
                 melif_score = test_scoring(melif_selected_features)
+
                 accumulated_info.append([melif_score, features_select, 'melif'])
 
         sns.set_style('whitegrid')
         df = pd.DataFrame(data=accumulated_info, columns=['score', 'features_number', 'model'])
         ax = sns.lineplot(x='features_number', y='score', hue='model',
                           data=df, ci='sd', palette=['red', 'blue'])
-        ax.set_xticks(range(self.max_features_select + 1))
+        ax.set_xticks(range(1, self.max_features_select + 1))
         plt.grid()
 
         if not os.path.exists(self.save_path.format(file_number)):
@@ -160,6 +161,10 @@ class PMeLiFExperiment(Experiment):
     def split_features(features, train=10):
         train_features = random.sample(features, train)
         test_features = [i for i in features if i not in train_features]
+        print(
+            'Number of train features requested {0}, number of train features generated {1}, number of test features generate {2}'.format(
+                train, len(train_features), len(test_features))
+        )
         return train_features, test_features
 
     @staticmethod
@@ -168,9 +173,9 @@ class PMeLiFExperiment(Experiment):
         class_first = np.where(labels == 1)[0]
         count_zero = int(float(len(class_zero)) / len(labels) * subsample_size)
         count_first = int(float(len(class_first)) / len(labels) * subsample_size)
-        print("Number of objects", len(labels), "Number of zero class objects", len(class_zero),
-              "Number of first class objects", len(class_first))
-        print("Number of scaled zero class", count_zero, "Number of scaled first class", count_first)
+        print('Number of objects', len(labels), 'Number of zero class objects', len(class_zero),
+              'Number of first class objects', len(class_first))
+        print('Number of scaled zero class', count_zero, 'Number of scaled first class', count_first)
         return class_zero, class_first, count_zero, count_first
 
     @staticmethod
