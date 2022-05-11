@@ -113,11 +113,13 @@ class PMeLiFExperiment(Experiment):
         ax = sns.lineplot(x='features_number', y='score', hue='model',
                           data=df, ci='sd', palette=['red', 'blue'])
         ax.set_xticks(range(1, self.max_features_select + 1))
+        ax.set_ylim([0.0, None])
+        ax.set_xlim([1.0, None])
         plt.grid()
 
         if not os.path.exists(self.save_path.format(file_number)):
             os.makedirs(self.save_path.format(file_number))
-        plt.savefig(self.save_path.format(file_number) + 'pmelif_test_run.png')
+        plt.savefig(self.save_path.format(file_number) + 'pmelif_plot.png')
         df.to_csv(self.save_path.format(file_number) + 'pmelif_dataset.csv')
         plt.close()
 
