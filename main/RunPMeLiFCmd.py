@@ -41,7 +41,7 @@ number_samples = int(args.number_samples)
 save_path = args.save_path
 baseline = args.baseline
 melif_filters = args.melif_filters
-subsample_size = args.subsample_size
+subsample_size = int(args.subsample_size)
 
 pipeline = SingleRunPipeline(file_name)
 filters = [UnivariateFilter(filter_name) for filter_name in melif_filters]
