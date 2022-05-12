@@ -53,7 +53,7 @@ class PMeLiFExperiment(Experiment):
     def run(self, features, labels, file_name):
         subname = file_name[:-4]
         df = pd.read_csv('../results/' + subname + '/selected_features/sel_features.csv')
-        # df = pd.read_csv('/nfs/home/dshusharin/results/' + subname + '/selected_features/sel_features.csv')
+        # df = pd.read_csv('/nfs/home/dshusharin/masters/results/' + subname + '/selected_features/sel_features.csv')
         known_features = [int(i) for i in
                           df.loc[df['filter_name'] == self.known_features_filter]
                           ['joined_features'].iloc[0].split(',')]

@@ -29,5 +29,7 @@ class PipeLine:
             print(file_name)
             labels, features = PipeLine.scale_data(read)
             labels, features = shuffle(labels, features)
+            file_name = file_name[:-4].split('/')[-1]
+            print(file_name)
             result_map[file_name[:-4]] = experiment.run(features, labels, file_name)
         return result_map

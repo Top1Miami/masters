@@ -25,4 +25,6 @@ class SingleRunPipeline:
         print(self.file)
         labels, features = SingleRunPipeline.scale_data(read)
         labels, features = shuffle(labels, features)
-        return experiment.run(features, labels, self.file)
+        file_name = self.file.split('/')[-1]
+        print(file_name)
+        return experiment.run(features, labels, file_name)
