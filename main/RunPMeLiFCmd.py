@@ -7,8 +7,8 @@ from ITMO_FS import UnivariateFilter
 from experiment import PMeLiFExperiment
 from pipeline import SingleRunPipeline
 
-# sys.path.insert(madelon, '/Users/dmitriish/PycharmProjects/masters/')
-# sys.path.insert(madelon, '/nfs/home/dshusharin/masters/')
+# sys.path.insert(1, '/Users/dmitriish/PycharmProjects/masters/')
+# sys.path.insert(1, '/nfs/home/dshusharin/masters/')
 
 parser = ArgumentParser()
 parser.add_argument('-f', '--file',
