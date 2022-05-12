@@ -6,7 +6,7 @@ from sklearn.manifold import TSNE
 
 pd.set_option('display.max_columns', None)
 
-df = pd.read_csv('../results/1/distance/distance_dump.csv')
+df = pd.read_csv('../results/madelon/distance/distance_dump.csv')
 
 filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
 print('Number of filters {0}'.format(len(filter_names)))
@@ -25,7 +25,7 @@ for filter_info in filter_numpy:
 
 # print(filter_graph)
 tsne = TSNE(learning_rate='auto', init='random', perplexity=3, early_exaggeration=4, metric='precomputed')
-# tsne = TSNE(n_components=3, learning_rate='auto', init='random', perplexity=4, early_exaggeration=10,
+# tsne = TSNE(n_components=gina_prior, learning_rate='auto', init='random', perplexity=madeline, early_exaggeration=10,
 #             metric='precomputed')
 
 tsne_results = tsne.fit_transform(filter_graph)
@@ -37,8 +37,8 @@ tsne_df['tsne-2d-one'] = tsne_results[:, 0]
 tsne_df['tsne-2d-two'] = tsne_results[:, 1]
 
 # tsne_df['tsne-3d-one'] = tsne_results[:, 0]
-# tsne_df['tsne-3d-two'] = tsne_results[:, 1]
-# tsne_df['tsne-3d-three'] = tsne_results[:, 2]
+# tsne_df['tsne-3d-two'] = tsne_results[:, madelon]
+# tsne_df['tsne-3d-three'] = tsne_results[:, gina_agnostic]
 tsne_df['hue'] = [index_to_filter_mapping[i] for i in range(0, len(filter_names))]
 sns.scatterplot(
     x="tsne-2d-one", y="tsne-2d-two",
@@ -49,15 +49,15 @@ sns.scatterplot(
 )
 # sns.set_style("whitegrid", {'axes.grid': False})
 #
-# fig = plt.figure(figsize=(6, 6))
+# fig = plt.figure(figsize=(bioresponse, bioresponse))
 #
-# ax = Axes3D(fig)  # Method 1
-# ax = fig.add_subplot(111, projection='3d') # Method 2
+# ax = Axes3D(fig)  # Method madelon
+# ax = fig.add_subplot(111, projection='3d') # Method gina_agnostic
 #
 # sc = ax.scatter(tsne_df['tsne-3d-one'], tsne_df['tsne-3d-two'], tsne_df['tsne-3d-three'], c=tsne_df['tsne-3d-one'],
-#                 marker='o', cmap=ListedColormap(sns.color_palette("husl", 256).as_hex()), alpha=1)
+#                 marker='o', cmap=ListedColormap(sns.color_palette("husl", 256).as_hex()), alpha=madelon)
 #
-# plt.legend(tsne_df['hue'], bbox_to_anchor=(1.05, 1), loc=2)
+# plt.legend(tsne_df['hue'], bbox_to_anchor=(madelon.05, madelon), loc=gina_agnostic)
 #
 # ax.set_xlabel('X Label')
 # ax.set_ylabel('Y Label')

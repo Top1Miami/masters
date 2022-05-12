@@ -49,15 +49,18 @@ class EnvironmentExperiment(Experiment):
             print("Selected features", sorted(univariate_filter.selected_features_))
             scores = cross_val_score(classifier, features[:, univariate_filter.selected_features_], labels)
             joined_features = ','.join([str(i) for i in univariate_filter.selected_features_])
-            joined_scores = ','.join([str(round(univariate_filter.feature_scores_[i], 3)) for i in univariate_filter.selected_features_])
-            result.append([EnvironmentExperiment.filter_names[i], np.mean(scores), np.std(scores), joined_features, joined_scores])
+            joined_scores = ','.join(
+                [str(round(univariate_filter.feature_scores_[i], 3)) for i in univariate_filter.selected_features_])
+            result.append([EnvironmentExperiment.filter_names[i], np.mean(scores), np.std(scores), joined_features,
+                           joined_scores])
 
-        df = pd.DataFrame(result, columns=['filter_name', 'mean_score', 'std_score', 'joined_features', 'joined_scores'])
+        df = pd.DataFrame(result,
+                          columns=['filter_name', 'mean_score', 'std_score', 'joined_features', 'joined_scores'])
 
-        file_number = file_name[:-4]
-        if not os.path.exists('../results/' + file_number + '/selected_features/'):
-            os.makedirs('../results/' + file_number + '/selected_features/')
-        df.to_csv('../results/' + file_number + '/selected_features/sel_features.csv')
+        subname = file_name[:-4]
+        if not os.path.exists('../results/' + subname + '/selected_features/'):
+            os.makedirs('../results/' + subname + '/selected_features/')
+        df.to_csv('../results/' + subname + '/selected_features/sel_features.csv')
 
     @staticmethod
     def difference(l1, l2):

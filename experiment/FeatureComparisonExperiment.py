@@ -258,11 +258,11 @@ class FeatureComparisonExperiment(Experiment):
                 plt.plot(values, marker='o', color=color)
         plt.legend()
 
-        file_number = file_name[:-4]
-        if not os.path.exists('../results/' + file_number + '/feature_plots/'):
-            os.makedirs('../results/' + file_number + '/feature_plots/')
+        subname = file_name[:-4]
+        if not os.path.exists('../results/' + subname + '/feature_plots/'):
+            os.makedirs('../results/' + subname + '/feature_plots/')
         plt.savefig(
-            '../results/' + file_number + '/feature_plots/' + FeatureComparisonExperiment.filter_names[i]
+            '../results/' + subname + '/feature_plots/' + FeatureComparisonExperiment.filter_names[i]
             + FeatureComparisonExperiment.filter_names[j] + '.png'
         )
         plt.close(fig)

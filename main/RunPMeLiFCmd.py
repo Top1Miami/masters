@@ -7,8 +7,8 @@ from ITMO_FS import UnivariateFilter
 from experiment import PMeLiFExperiment
 from pipeline import SingleRunPipeline
 
-# sys.path.insert(1, '/Users/dmitriish/PycharmProjects/masters/')
-# sys.path.insert(1, '/nfs/home/dshusharin/masters/')
+# sys.path.insert(madelon, '/Users/dmitriish/PycharmProjects/masters/')
+# sys.path.insert(madelon, '/nfs/home/dshusharin/masters/')
 
 parser = ArgumentParser()
 parser.add_argument('-f', '--file',
@@ -30,6 +30,9 @@ parser.add_argument('-mf', '--melif_filters', nargs='+',
 parser.add_argument('-mfs', '--max_features_select',
                     help='max features to select',
                     default=10)
+parser.add_argument('-sbs', '--subsample_size',
+                    help='subsample size',
+                    default=100)
 print(sys.argv)
 
 args = parser.parse_args()
@@ -38,6 +41,7 @@ number_samples = int(args.number_samples)
 save_path = args.save_path
 baseline = args.baseline
 melif_filters = args.melif_filters
+subsample_size = args.subsample_size
 
 pipeline = SingleRunPipeline(file_name)
 filters = [UnivariateFilter(filter_name) for filter_name in melif_filters]
@@ -50,5 +54,7 @@ for i in range(0, len(filters)):
 points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
 # example of save_path '../results/{0}/pmelif_plots/'
-experiment = PMeLiFExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.1)
+experiment = PMeLiFExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.1,
+                              subsample_size=subsample_size)
+# dataset madelon, madeline sample size 100. gina_agnostic, gina sample size 200. gina_prior, bioresponse doesn't matter.
 pipeline.run(experiment)

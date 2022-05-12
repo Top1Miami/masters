@@ -31,11 +31,13 @@ class PMeLiFExperiment(Experiment):
         delta used in modifying points in MeLiF grid search
     known_train_features : int,
         number of known train batch features
+    subsample_size : int
+        number of objects to use for experiment sample
     """
 
     def __init__(self, generated_samples_number, known_features_filter,
                  ensemble, max_features_select, save_path, points=None, delta=0.2,
-                 known_train_features=10):
+                 known_train_features=10, subsample_size=100):
         self.generated_samples_number = generated_samples_number
         self.known_features_filter = known_features_filter
         self.ensemble = ensemble
@@ -43,18 +45,21 @@ class PMeLiFExperiment(Experiment):
         self.points = points
         self.delta = delta
         self.known_train_features = known_train_features
+        self.subsample_size = subsample_size
         if known_train_features < max_features_select:
             raise ValueError('Max features to select should be less than number of train known features.')
         self.save_path = save_path
 
     def run(self, features, labels, file_name):
-        file_number = file_name[:-4][-1:]
-        df = pd.read_csv('../results/' + file_number + '/selected_features/sel_features.csv')
+        subname = file_name[:-4]
+        df = pd.read_csv('../results/' + subname + '/selected_features/sel_features.csv')
+        # df = pd.read_csv('/nfs/home/dshusharin/results/' + subname + '/selected_features/sel_features.csv')
         known_features = [int(i) for i in
                           df.loc[df['filter_name'] == self.known_features_filter]
                           ['joined_features'].iloc[0].split(',')]
 
-        class_zero, class_first, count_zero, count_first = PMeLiFExperiment.generate_sampling_data(labels)
+        class_zero, class_first, count_zero, count_first = PMeLiFExperiment.generate_sampling_data(labels,
+                                                                                                   self.subsample_size)
         other_features = [i for i in range(0, len(features[0])) if i not in known_features]
 
         accumulated_info = []
@@ -117,10 +122,10 @@ class PMeLiFExperiment(Experiment):
         ax.set_xlim([1.0, None])
         plt.grid()
 
-        if not os.path.exists(self.save_path.format(file_number)):
-            os.makedirs(self.save_path.format(file_number))
-        plt.savefig(self.save_path.format(file_number) + 'pmelif_plot.png')
-        df.to_csv(self.save_path.format(file_number) + 'pmelif_dataset.csv')
+        if not os.path.exists(self.save_path.format(subname)):
+            os.makedirs(self.save_path.format(subname))
+        plt.savefig(self.save_path.format(subname) + 'pmelif_plot.png')
+        df.to_csv(self.save_path.format(subname) + 'pmelif_dataset.csv')
         plt.close()
 
     @staticmethod
@@ -170,7 +175,7 @@ class PMeLiFExperiment(Experiment):
         return train_features, test_features
 
     @staticmethod
-    def generate_sampling_data(labels, subsample_size=100):
+    def generate_sampling_data(labels, subsample_size):
         class_zero = np.where(labels == 0)[0]
         class_first = np.where(labels == 1)[0]
         count_zero = int(float(len(class_zero)) / len(labels) * subsample_size)

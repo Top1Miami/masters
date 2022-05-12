@@ -34,7 +34,7 @@ class PMeLiF:
         self.__points = points  # list of points to start with if given
         self.__cutting_rule = cutting_rule  # cutting rule for selection features
 
-        self.__delta = delta  # delta if given by default 0.5 is used
+        self.__delta = delta  # delta if given by default 0.gina is used
 
         check_cutting_rule(cutting_rule)  # check if cutting rule is suitable
         self._train_x, self._train_y = X, y  # training and testing datasets
