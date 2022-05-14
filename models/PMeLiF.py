@@ -1,4 +1,3 @@
-from enum import Enum
 from logging import getLogger
 
 import numpy as np
@@ -7,21 +6,9 @@ from ITMO_FS.utils import BaseWrapper
 from ITMO_FS.utils import apply_cr
 from ITMO_FS.utils.data_check import *
 from sklearn.base import clone
-from sklearn.model_selection import cross_val_score
 
 
 class PMeLiF(BaseWrapper):
-    # TODO Hypothesis run with both scoring functions on features and on dataset
-    """
-        Tells in which mode to run MeLiF algorithm
-        MELIF stands for regular MeLiF with scoring function based on estimator performance
-        PMELIF stands for MeLiF with scoring function based on guessing pre-known features
-    """
-
-    class Mode(Enum):
-        MELIF = 1
-        PMELIF = 2
-
     """MeLiF algorithm.
 
     Parameters
@@ -29,14 +16,8 @@ class PMeLiF(BaseWrapper):
     estimator : object
         A supervised learning estimator that should have a fit(X, y) method and
         a predict(X) method.
-    measure : string or callable, depends on selected mode
-        Mode.MELIF case:
-            A standard estimator metric (e.g. 'f1' or 'roc_auc') or a callable with
-            signature measure(estimator, X, y) which should return only a single
-            value.
-        Mode.PMELIF case:
-            Scoring function taking selected_features as an argument and comparing them
-            to baseline pre-known features.
+    scoring_function : callable which is ScoringFunction implementation
+        see corresponding class for examples
     cutting_rule : string or callable
         A cutting rule name defined in GLOB_CR or a callable with signature
         cutting_rule (features), which should return a list features ranked by
@@ -44,8 +25,6 @@ class PMeLiF(BaseWrapper):
     filter_ensemble : object
         A filter ensemble (e.g. WeightBased) or a list of filters that will be
         used to create a WeightBased ensemble.
-    mode : Mode
-        Tells in which mode to run MeLiF algorithm, base value is Mode.MELIF
     delta : float
         The step in coordinate descent.
     points : array-like
@@ -81,13 +60,12 @@ class PMeLiF(BaseWrapper):
     array([ 3,  4,  1, 13, 16], dtype=int64)
     """
 
-    def __init__(self, estimator, measure, cutting_rule, filter_ensemble,
-                 mode=Mode.MELIF, delta=0.5, points=None, seed=42, cv=3):
+    def __init__(self, estimator, scoring_function, cutting_rule, filter_ensemble,
+                 delta=0.5, points=None, seed=42, cv=3):
         self.estimator = estimator
-        self.measure = measure
+        self.scoring_function = scoring_function
         self.cutting_rule = cutting_rule
         self.filter_ensemble = filter_ensemble
-        self.mode = mode
         self.delta = delta
         self.points = points
         self.seed = seed
@@ -171,7 +149,7 @@ class PMeLiF(BaseWrapper):
         best_point = point
         selected_features = cutting_rule(np.dot(scores.T, point))
         # Change scoring function with PMeLiF like scoring function
-        best_score = self.__score(X, y, selected_features)
+        best_score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
         delta = np.eye(self.n_filters) * self.delta
         changed = True
         while changed:
@@ -186,7 +164,7 @@ class PMeLiF(BaseWrapper):
                 iteration_point_plus = best_point + delta[f]
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_plus))
-                score = self.__score(X, y, selected_features)
+                score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
                 getLogger(__name__).info(
                     "Trying to move to point %s: score = %d",
                     iteration_point_plus, score)
@@ -199,7 +177,7 @@ class PMeLiF(BaseWrapper):
                 iteration_point_minus = best_point - delta[f]
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_minus))
-                score = self.__score(X, y, selected_features)
+                score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
                 getLogger(__name__).info(
                     "Trying to move to point %s: score = %d",
                     iteration_point_minus, score)
@@ -209,14 +187,6 @@ class PMeLiF(BaseWrapper):
                     changed = True
                     break
         return best_point, best_score
-
-    def __score(self, X, y, selected_features):
-        if self.mode == PMeLiF.Mode.MELIF:
-            return cross_val_score(
-                self._estimator, X[:, selected_features], y, cv=self.cv,
-                scoring=self.measure).mean()
-        else:
-            return self.measure(selected_features)
 
     def pmelif_transform(self, X, y):
         scores = self.__ensemble.get_scores(X, y)

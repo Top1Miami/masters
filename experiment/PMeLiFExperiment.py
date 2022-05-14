@@ -3,13 +3,14 @@ import random
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC
 
 from experiment import Experiment
 from models import PMeLiF
+from models.ScoringFunctions import ClassifierScoring
+from models.ScoringFunctions import RecallFeatureScoring
+from utils import plot_quantiles
 from utils import select_k_best_abs
 
 
@@ -90,43 +91,43 @@ class PMeLiFExperiment(Experiment):
             for features_select in range(1, self.max_features_select + 1):
                 # run pmelif
                 pmelif = PMeLiF(LinearRegression(),
-                                train_scoring,
+                                RecallFeatureScoring(train_scoring),
                                 select_k_best_abs(features_select), self.ensemble,
-                                mode=PMeLiF.Mode.PMELIF, points=self.points, delta=self.delta)
+                                points=self.points, delta=self.delta)
 
                 pmelif.fit(train_x, y)
                 pmelif_score_matrix = pmelif.pmelif_transform(test_x, y)
 
                 pmelif_selected_features = select_k_best_abs(features_select)(pmelif_score_matrix)
-                pmelif_score = test_scoring(pmelif_selected_features)
+                pmelif_recall_score = test_scoring(pmelif_selected_features)
+                pmelif_estimator_score = PMeLiFExperiment.estimator_score(test_x, y, SVC(), pmelif_selected_features)
 
-                accumulated_info.append([pmelif_score, features_select, 'pmelif'])
+                accumulated_info.append([pmelif_recall_score, pmelif_estimator_score, features_select, 'pmelif'])
                 # run melif
-                melif = PMeLiF(SVC(), 'f1_macro', select_k_best_abs(features_select), self.ensemble,
-                               mode=PMeLiF.Mode.MELIF, points=self.points, delta=self.delta)
+                melif = PMeLiF(SVC(), ClassifierScoring('f1_macro'), select_k_best_abs(features_select), self.ensemble,
+                               points=self.points, delta=self.delta)
 
                 melif.fit(train_x, y)
                 melif_score_matrix = melif.pmelif_transform(test_x, y)
 
                 melif_selected_features = select_k_best_abs(features_select)(melif_score_matrix)
-                melif_score = test_scoring(melif_selected_features)
+                melif_recall_score = test_scoring(melif_selected_features)
+                melif_estimator_score = PMeLiFExperiment.estimator_score(test_x, y, SVC(), melif_selected_features)
 
-                accumulated_info.append([melif_score, features_select, 'melif'])
-
-        sns.set_style('whitegrid')
-        df = pd.DataFrame(data=accumulated_info, columns=['score', 'features_number', 'model'])
-        ax = sns.lineplot(x='features_number', y='score', hue='model',
-                          data=df, ci='sd', palette=['red', 'blue'])
-        ax.set_xticks(range(1, self.max_features_select + 1))
-        ax.set_ylim([0.0, None])
-        ax.set_xlim([1.0, None])
-        plt.grid()
+                accumulated_info.append([melif_recall_score, melif_estimator_score, features_select, 'melif'])
+        df = pd.DataFrame(data=accumulated_info,
+                          columns=['recall_score', 'estimator_score', 'features_number', 'model'])
 
         if not os.path.exists(self.save_path.format(subname)):
             os.makedirs(self.save_path.format(subname))
-        plt.savefig(self.save_path.format(subname) + 'pmelif_plot.png')
-        df.to_csv(self.save_path.format(subname) + 'pmelif_dataset.csv')
-        plt.close()
+
+        plot_quantiles(df, self.save_path.format(subname) + 'feature_recall_quantiles.png', 'recall_score')
+        plot_quantiles(df, self.save_path.format(subname) + 'estimator_score_quantiles.png', 'estimator_score')
+        df.to_csv(self.save_path.format(subname) + 'comparison.csv')
+
+    @staticmethod
+    def estimator_score(X, y, estimator, selected_features):
+        return ClassifierScoring('f1_macro').measure(X, y, selected_features, estimator, 3)
 
     @staticmethod
     def feature_prec_wrapper(mapping):
