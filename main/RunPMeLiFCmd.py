@@ -26,7 +26,7 @@ parser.add_argument('-b', '--baseline',
                     default='pearson')
 parser.add_argument('-mf', '--melif_filters', nargs='+',
                     help='melif filters, possible list: GiniIndex, SymmetricUncertainty, SpearmanCorr, PearsonCorr, FechnerCorr'
-                         'Chi2, Anova, Relief')
+                         'Chi2, Anova, Relief, InformationGain')
 parser.add_argument('-mfs', '--max_features_select',
                     help='max features to select',
                     default=10)
@@ -45,7 +45,7 @@ subsample_size = int(args.subsample_size)
 
 pipeline = SingleRunPipeline(file_name)
 filters = [UnivariateFilter(filter_name) for filter_name in melif_filters]
-points = np.random.random_sample(size=(50, len(filters)))
+points = np.random.random_sample(size=(200, len(filters)))
 
 for i in range(0, len(filters)):
     point = np.zeros(len(filters))
@@ -54,7 +54,7 @@ for i in range(0, len(filters)):
 points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
 # example of save_path '../results/{0}/pmelif_plots/'
-experiment = PMeLiFExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.1,
+experiment = PMeLiFExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.05,
                               subsample_size=subsample_size)
 # dataset madelon, madeline sample size 100. gina_agnostic, gina sample size 200. gina_prior, bioresponse doesn't matter.
 pipeline.run(experiment)

@@ -10,7 +10,7 @@ from experiment import Experiment
 from models import PMeLiF
 from models.ScoringFunctions import ClassifierScoring
 from models.ScoringFunctions import RecallFeatureScoring
-from utils import plot_quantiles
+from utils import plot_std
 from utils import select_k_best_abs
 
 
@@ -83,6 +83,7 @@ class PMeLiFExperiment(Experiment):
 
             train_scoring = PMeLiFExperiment.feature_rec_wrapper(train_mapping, train_known_features)
             test_scoring = PMeLiFExperiment.feature_rec_wrapper(test_mapping, test_known_features)
+            test_precision_scoring = PMeLiFExperiment.feature_prec_wrapper(test_mapping)
 
             train_x = features[sample_indices_object][:, train_joined_features]
             test_x = features[sample_indices_object][:, test_joined_features]
@@ -101,8 +102,11 @@ class PMeLiFExperiment(Experiment):
                 pmelif_selected_features = select_k_best_abs(features_select)(pmelif_score_matrix)
                 pmelif_recall_score = test_scoring(pmelif_selected_features)
                 pmelif_estimator_score = PMeLiFExperiment.estimator_score(test_x, y, SVC(), pmelif_selected_features)
+                pmelif_precision_score = test_precision_scoring(pmelif_selected_features)
 
-                accumulated_info.append([pmelif_recall_score, pmelif_estimator_score, features_select, 'pmelif'])
+                accumulated_info.append([pmelif_recall_score, pmelif_precision_score, pmelif_estimator_score,
+                                         features_select, PMeLiFExperiment.convert_to_str(pmelif_selected_features),
+                                         'pmelif'])
                 # run melif
                 melif = PMeLiF(SVC(), ClassifierScoring('f1_macro'), select_k_best_abs(features_select), self.ensemble,
                                points=self.points, delta=self.delta)
@@ -113,17 +117,29 @@ class PMeLiFExperiment(Experiment):
                 melif_selected_features = select_k_best_abs(features_select)(melif_score_matrix)
                 melif_recall_score = test_scoring(melif_selected_features)
                 melif_estimator_score = PMeLiFExperiment.estimator_score(test_x, y, SVC(), melif_selected_features)
+                melif_precision_score = test_precision_scoring(melif_selected_features)
 
-                accumulated_info.append([melif_recall_score, melif_estimator_score, features_select, 'melif'])
+                accumulated_info.append([melif_recall_score, melif_precision_score, melif_estimator_score,
+                                         features_select, PMeLiFExperiment.convert_to_str(melif_selected_features),
+                                         'melif'])
         df = pd.DataFrame(data=accumulated_info,
-                          columns=['recall_score', 'estimator_score', 'features_number', 'model'])
+                          columns=['recall_score', 'precision_score', 'estimator_score', 'features_number',
+                                   'selected_features', 'model'])
 
         if not os.path.exists(self.save_path.format(subname)):
             os.makedirs(self.save_path.format(subname))
 
-        plot_quantiles(df, self.save_path.format(subname) + 'feature_recall_quantiles.png', 'recall_score')
-        plot_quantiles(df, self.save_path.format(subname) + 'estimator_score_quantiles.png', 'estimator_score')
+        plot_std(df, self.save_path.format(subname) + 'feature_recall_std.png', 'recall_score',
+                 self.max_features_select)
+        plot_std(df, self.save_path.format(subname) + 'estimator_score_std.png', 'estimator_score',
+                 self.max_features_select)
+        plot_std(df, self.save_path.format(subname) + 'feature_precision_std.png', 'precision_score',
+                 self.max_features_select)
         df.to_csv(self.save_path.format(subname) + 'comparison.csv')
+
+    @staticmethod
+    def convert_to_str(x):
+        return ','.join([str(i) for i in x])
 
     @staticmethod
     def estimator_score(X, y, estimator, selected_features):

@@ -1,3 +1,4 @@
+import seaborn as sns
 from matplotlib import pyplot as plt
 
 
@@ -34,6 +35,18 @@ def plot_quantiles(df, path, score_field):
 
     ax.legend()
     ax.set_xticks(range(1, 11))
+    ax.set_ylim([0.0, None])
+    ax.set_xlim([1.0, None])
+    plt.grid()
+    plt.savefig(path)
+    plt.close()
+
+
+def plot_std(df, path, score_field, max_features_select):
+    sns.set_style('whitegrid')
+    ax = sns.lineplot(x='features_number', y=score_field, hue='model',
+                      data=df, ci='sd', palette=['red', 'blue'])
+    ax.set_xticks(range(1, max_features_select + 1))
     ax.set_ylim([0.0, None])
     ax.set_xlim([1.0, None])
     plt.grid()
