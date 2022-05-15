@@ -1,19 +1,8 @@
 import random
 
 import numpy as np
-from ITMO_FS import UnivariateFilter
-from ITMO_FS import fechner_corr
-from ITMO_FS import gini_index
-from ITMO_FS import information_gain
-from ITMO_FS import pearson_corr
-from ITMO_FS import reliefF_measure
-from ITMO_FS import spearman_corr
-from ITMO_FS import su_measure
 
 from models import ClassifierScoring
-from utils import anova_measure_scaled
-from utils import chi2_measure_scaled
-from utils import select_k_best_abs
 
 
 def convert_to_str(x):
@@ -85,19 +74,3 @@ def generate_sample(class_zero, class_first, count_zero, count_first):
     zero = np.random.choice(class_zero, count_zero)
     first = np.random.choice(class_first, count_first)
     return [*zero, *first]
-
-
-def algorithms(number_of_features):
-    univariate_filters = [
-        UnivariateFilter(su_measure, select_k_best_abs(number_of_features)),
-        UnivariateFilter(fechner_corr, select_k_best_abs(number_of_features)),
-        UnivariateFilter(spearman_corr, select_k_best_abs(number_of_features)),
-        UnivariateFilter(pearson_corr, select_k_best_abs(number_of_features)),
-        UnivariateFilter(information_gain, select_k_best_abs(number_of_features)),
-        UnivariateFilter(gini_index, select_k_best_abs(number_of_features)),
-        UnivariateFilter(chi2_measure_scaled, select_k_best_abs(number_of_features)),
-        UnivariateFilter(reliefF_measure, select_k_best_abs(number_of_features)),
-        UnivariateFilter(anova_measure_scaled, select_k_best_abs(number_of_features))
-    ]
-    filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
-    return univariate_filters, filter_names

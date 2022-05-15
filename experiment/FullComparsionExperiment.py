@@ -1,6 +1,14 @@
 import os.path
 
 import pandas as pd
+from ITMO_FS import UnivariateFilter
+from ITMO_FS import fechner_corr
+from ITMO_FS import gini_index
+from ITMO_FS import information_gain
+from ITMO_FS import pearson_corr
+from ITMO_FS import reliefF_measure
+from ITMO_FS import spearman_corr
+from ITMO_FS import su_measure
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC
 
@@ -8,7 +16,8 @@ from experiment import Experiment
 from models import PMeLiF
 from models.ScoringFunctions import ClassifierScoring
 from models.ScoringFunctions import RecallFeatureScoring
-from utils import algorithms
+from utils import anova_measure_scaled
+from utils import chi2_measure_scaled
 from utils import plot_no_std
 from utils import select_k_best_abs
 from utils.ComparisonUtils import convert_to_str
@@ -127,7 +136,7 @@ class FullComparisonExperiment(Experiment):
                 accumulated_info.append([melif_recall_score, melif_precision_score, melif_estimator_score,
                                          features_select, convert_to_str(melif_selected_features),
                                          'melif'])
-                univariate_filters, filter_names = algorithms(features_select)
+                univariate_filters, filter_names = FullComparisonExperiment.algorithms(features_select)
                 for i in range(len(univariate_filters)):
                     univariate_filter = univariate_filters[i]
                     filter_name = filter_names[i]
@@ -156,3 +165,19 @@ class FullComparisonExperiment(Experiment):
         plot_no_std(df, self.save_path.format(subname) + 'feature_precision_std.png', 'precision_score',
                     self.max_features_select, 'Paired')
         df.to_csv(self.save_path.format(subname) + 'comparison.csv')
+
+    @staticmethod
+    def algorithms(number_of_features):
+        univariate_filters = [
+            UnivariateFilter(su_measure, select_k_best_abs(number_of_features)),
+            UnivariateFilter(fechner_corr, select_k_best_abs(number_of_features)),
+            UnivariateFilter(spearman_corr, select_k_best_abs(number_of_features)),
+            UnivariateFilter(pearson_corr, select_k_best_abs(number_of_features)),
+            UnivariateFilter(information_gain, select_k_best_abs(number_of_features)),
+            UnivariateFilter(gini_index, select_k_best_abs(number_of_features)),
+            UnivariateFilter(chi2_measure_scaled, select_k_best_abs(number_of_features)),
+            UnivariateFilter(reliefF_measure, select_k_best_abs(number_of_features)),
+            UnivariateFilter(anova_measure_scaled, select_k_best_abs(number_of_features))
+        ]
+        filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
+        return univariate_filters, filter_names
