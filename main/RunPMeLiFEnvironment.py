@@ -4,7 +4,7 @@ from ITMO_FS import anova
 from ITMO_FS import fechner_corr
 from ITMO_FS import spearman_corr
 
-from experiment import PMeLiFExperiment
+from experiment import PMeLiFComparisonExperiment
 from pipeline import PipeLine
 
 pipeline = PipeLine('../datasets')
@@ -19,5 +19,6 @@ for i in range(0, len(filters)):
     points = np.vstack((points, point))
 points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
-experiment = PMeLiFExperiment(5, 'pearson', filters, 10, '../results/{0}/pmelif_plots/', points=points, delta=0.1)
+experiment = PMeLiFComparisonExperiment(5, 'pearson', filters, 10, '../results/{0}/pmelif_plots/', points=points,
+                                        delta=0.1)
 pipeline.run(experiment)

@@ -42,13 +42,29 @@ def plot_quantiles(df, path, score_field):
     plt.close()
 
 
-def plot_std(df, path, score_field, max_features_select):
+def plot_std(df, path, score_field, max_features_select, palette=None):
+    if palette is None:
+        palette = ['red', 'blue']
     sns.set_style('whitegrid')
     ax = sns.lineplot(x='features_number', y=score_field, hue='model',
-                      data=df, ci='sd', palette=['red', 'blue'])
+                      data=df, ci='sd', palette=palette)
     ax.set_xticks(range(1, max_features_select + 1))
     ax.set_ylim([0.0, None])
     ax.set_xlim([1.0, None])
     plt.grid()
+    plt.savefig(path)
+    plt.close()
+
+
+def plot_no_std(df, path, score_field, max_features_select, palette=None):
+    if palette is None:
+        palette = ['red', 'blue']
+    ax = sns.lineplot(x='features_number', y=score_field, hue='model',
+                      data=df, ci=None, palette=palette)
+    ax.set_xticks(range(1, max_features_select + 1))
+    ax.set_ylim([0.0, None])
+    ax.set_xlim([1.0, None])
+    plt.grid()
+    plt.legend(bbox_to_anchor=(0.85, 1), loc=2, borderaxespad=0.)
     plt.savefig(path)
     plt.close()
