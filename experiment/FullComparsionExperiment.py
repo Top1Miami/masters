@@ -69,7 +69,8 @@ class FullComparisonExperiment(Experiment):
         self.save_path = save_path
 
     def run(self, features, labels, file_name):
-        print('Number of samples generated {0}, size of sample {1}', self.generated_samples_number, self.sample_size)
+        print('Number of samples generated {0}, size of sample {1}'.format(self.generated_samples_number,
+                                                                           self.sample_size))
         subname = file_name[:-4]
         df = pd.read_csv('../results/' + subname + '/selected_features/sel_features.csv')
         # df = pd.read_csv('/nfs/home/dshusharin/masters/results/' + subname + '/selected_features/sel_features.csv')
@@ -117,10 +118,11 @@ class FullComparisonExperiment(Experiment):
                 pmelif_recall_score = test_scoring(pmelif_selected_features)
                 pmelif_estimator_score = estimator_score(test_x, y, SVC(), pmelif_selected_features)
                 pmelif_precision_score = test_precision_scoring(pmelif_selected_features)
+                pmelif_best_point = pmelif.best_point_
 
                 accumulated_info.append([pmelif_recall_score, pmelif_precision_score, pmelif_estimator_score,
                                          features_select, convert_to_str(pmelif_selected_features),
-                                         'pmelif'])
+                                         'pmelif', convert_to_str(pmelif_best_point)])
                 # run melif
                 melif = PMeLiF(SVC(), ClassifierScoring('f1_macro'), select_k_best_abs(features_select), self.ensemble,
                                points=self.points, delta=self.delta)
@@ -132,10 +134,11 @@ class FullComparisonExperiment(Experiment):
                 melif_recall_score = test_scoring(melif_selected_features)
                 melif_estimator_score = estimator_score(test_x, y, SVC(), melif_selected_features)
                 melif_precision_score = test_precision_scoring(melif_selected_features)
+                melif_best_point = melif.best_point_
 
                 accumulated_info.append([melif_recall_score, melif_precision_score, melif_estimator_score,
                                          features_select, convert_to_str(melif_selected_features),
-                                         'melif'])
+                                         'melif', convert_to_str(melif_best_point)])
                 univariate_filters, filter_names = FullComparisonExperiment.algorithms(features_select)
                 for i in range(len(univariate_filters)):
                     univariate_filter = univariate_filters[i]
@@ -150,10 +153,10 @@ class FullComparisonExperiment(Experiment):
 
                     accumulated_info.append([filter_recall_score, filter_precision_score, filter_estimator_score,
                                              features_select, convert_to_str(filter_selected_features),
-                                             filter_name])
+                                             filter_name, ''])
         df = pd.DataFrame(data=accumulated_info,
                           columns=['recall_score', 'precision_score', 'estimator_score', 'features_number',
-                                   'selected_features', 'model'])
+                                   'selected_features', 'model', 'points'])
 
         if not os.path.exists(self.save_path.format(subname)):
             os.makedirs(self.save_path.format(subname))

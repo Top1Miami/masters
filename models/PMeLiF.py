@@ -174,7 +174,7 @@ class PMeLiF(BaseWrapper):
                     changed = True
                     break
 
-                iteration_point_minus = best_point - delta[f]
+                iteration_point_minus = max(list(best_point - delta[f]), list(np.zeros(len(best_point))))
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_minus))
                 score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
