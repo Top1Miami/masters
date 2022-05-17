@@ -13,6 +13,9 @@ def estimator_score(X, y, estimator, selected_features):
     return ClassifierScoring('f1_macro').measure(X, y, selected_features, estimator, 3)
 
 
+# 377 355 399 330 376 378 353 331  63 354 400  64 398 332 152  62 306 309
+#  499 308
+
 def feature_prec_wrapper(mapping):
     def feature_prec(predicted_features):
         correct_guess = 0.

@@ -2,6 +2,7 @@ from logging import getLogger
 
 import numpy as np
 from ITMO_FS.ensembles import WeightBased
+from ITMO_FS.filters.univariate.measures import _wrapped_partial
 from ITMO_FS.utils import BaseWrapper
 from ITMO_FS.utils import apply_cr
 from ITMO_FS.utils.data_check import *
@@ -101,7 +102,7 @@ class PMeLiF(BaseWrapper):
         getLogger(__name__).info(
             "Using MeLiF with ensemble: %s and cutting rule: %s",
             self.__ensemble, self.cutting_rule)
-        scores = self.__ensemble.get_scores(X, y)
+        scores = self.get_scores(X, y)
 
         if self.points is None:
             points = np.vstack((self.__filter_weights, np.eye(self.n_filters)))
@@ -117,9 +118,12 @@ class PMeLiF(BaseWrapper):
                 X, y, point, scores, self.cutting_rule)
             getLogger(__name__).info(
                 "Ended up in point %s with score %d", new_point, new_score)
+            print('Best search point {0}, score {1}'.format(new_point, new_score))
             if new_score > self.best_score_:
                 self.best_score_ = new_score
                 self.best_point_ = new_point
+                print('Changed global best point')
+        print('Result best point {0}, score {1}'.format(self.best_point_, self.best_score_))
         getLogger(__name__).info(
             "Final best point: %s with score %d",
             self.best_point_, self.best_score_)
@@ -152,6 +156,8 @@ class PMeLiF(BaseWrapper):
         best_score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
         delta = np.eye(self.n_filters) * self.delta
         changed = True
+        print('Search start point {0}, score {1}, selected features {2}'.format(best_point, best_score,
+                                                                                selected_features))
         while changed:
             # The original paper descends starting from the first filter;
             # We randomize the order instead to avoid local maximums
@@ -165,6 +171,8 @@ class PMeLiF(BaseWrapper):
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_plus))
                 score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
+                print('Point {0}, score {1}, selected features {2}'.format(iteration_point_plus, score,
+                                                                           selected_features))
                 getLogger(__name__).info(
                     "Trying to move to point %s: score = %d",
                     iteration_point_plus, score)
@@ -172,12 +180,15 @@ class PMeLiF(BaseWrapper):
                     best_score = score
                     best_point = iteration_point_plus
                     changed = True
+                    print('Changed cur best point')
                     break
 
                 iteration_point_minus = [max(p, 0) for p in best_point - delta[f]]
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_minus))
                 score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
+                print('Point {0}, score {1}, selected features {2}'.format(iteration_point_minus, score,
+                                                                           selected_features))
                 getLogger(__name__).info(
                     "Trying to move to point %s: score = %d",
                     iteration_point_minus, score)
@@ -185,10 +196,32 @@ class PMeLiF(BaseWrapper):
                     best_score = score
                     best_point = iteration_point_minus
                     changed = True
+                    print('Changed cur best point')
                     break
         return best_point, best_score
 
+    def get_scores(self, X, y):
+        return np.nan_to_num(np.vectorize(
+            lambda f: clone(f).fit(X, y).feature_scores_,
+            signature='()->(1)')(self.filter_ensemble))
+
     def pmelif_transform(self, X, y):
-        scores = self.__ensemble.get_scores(X, y)
+        scores = self.get_scores(X, y)
         score_matrix = np.dot(scores.T, self.best_point_)
         return score_matrix
+
+    @staticmethod
+    def select_k_best_abs(k):
+        return _wrapped_partial(PMeLiF.__select_k_abs, k=k, reverse=True)
+
+    @staticmethod
+    def __select_k_abs(scores, k, reverse=False):
+        if not isinstance(k, int):
+            raise TypeError("Number of features should be integer")
+        if k > scores.shape[0]:
+            raise ValueError(
+                "Cannot select %d features with n_features = %d" % (k, len(scores)))
+        order = np.argsort(np.abs(scores))
+        if reverse:
+            order = order[::-1]
+        return order[:k]

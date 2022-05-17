@@ -4,21 +4,14 @@ import pandas as pd
 import seaborn as sns
 from ITMO_FS import UnivariateFilter
 from ITMO_FS import fechner_corr
-from ITMO_FS import gini_index
 from ITMO_FS import information_gain
-from ITMO_FS import pearson_corr
-from ITMO_FS import reliefF_measure
 from ITMO_FS import spearman_corr
 from ITMO_FS import su_measure
 from sklearn.svm import SVC
 
 from experiment import Experiment
-from models import LinearCombinationScoring
 from models import PMeLiF
 from models.ScoringFunctions import ClassifierScoring
-from models.ScoringFunctions import RecallFeatureScoring
-from utils import anova_measure_scaled
-from utils import chi2_measure_scaled
 from utils import plot_no_std_no_color
 from utils import select_k_best_abs
 from utils.ComparisonUtils import convert_to_str
@@ -87,50 +80,6 @@ class ExactPipelineExperiment(Experiment):
             x = features[sample_indices_object]
             y = labels[sample_indices_object]
             for features_select in range(1, self.max_features_select + 1):
-                # run pmelif
-                alphas = [0.1, 0.3, 0.5, 0.7]
-                for alpha in alphas:
-                    scoring_function = LinearCombinationScoring([1, alpha],
-                                                                [ClassifierScoring('f1_macro'),
-                                                                 RecallFeatureScoring(train_scoring)])
-                    pmelif = PMeLiF(SVC(),
-                                    scoring_function,
-                                    select_k_best_abs(features_select), self.ensemble,
-                                    points=self.points, delta=self.delta)
-
-                    pmelif.fit(x, y)
-                    pmelif_score_matrix = pmelif.pmelif_transform(x, y)
-
-                    pmelif_selected_features = select_k_best_abs(len(known_features))(pmelif_score_matrix)
-                    pmelif_not_train = [feature for feature in pmelif_selected_features if
-                                        feature not in train_known_features]
-                    pmelif_recall_score = test_scoring(pmelif_not_train)
-                    pmelif_estimator_score = estimator_score(x, y, SVC(), pmelif_not_train)
-                    pmelif_precision_score = test_precision_scoring(pmelif_not_train)
-                    pmelif_best_point = pmelif.best_point_
-
-                    accumulated_info.append([pmelif_recall_score, pmelif_precision_score, pmelif_estimator_score,
-                                             features_select, convert_to_str(pmelif_not_train),
-                                             'pmelif' + str(alpha), convert_to_str(pmelif_best_point)])
-                # run melif
-                melif = PMeLiF(SVC(), ClassifierScoring('f1_macro'), select_k_best_abs(features_select), self.ensemble,
-                               points=self.points, delta=self.delta)
-
-                melif.fit(x, y)
-                melif_score_matrix = melif.pmelif_transform(x, y)
-
-                melif_selected_features = select_k_best_abs(len(known_features))(melif_score_matrix)
-                melif_not_train = [feature for feature in melif_selected_features if
-                                   feature not in train_known_features]
-
-                melif_recall_score = test_scoring(melif_not_train)
-                melif_estimator_score = estimator_score(x, y, SVC(), melif_not_train)
-                melif_precision_score = test_precision_scoring(melif_not_train)
-                melif_best_point = melif.best_point_
-
-                accumulated_info.append([melif_recall_score, melif_precision_score, melif_estimator_score,
-                                         features_select, convert_to_str(melif_not_train),
-                                         'melif', convert_to_str(melif_best_point)])
                 univariate_filters, filter_names = ExactPipelineExperiment.algorithms(features_select)
                 for i in range(len(univariate_filters)):
                     univariate_filter = univariate_filters[i]
@@ -143,12 +92,66 @@ class ExactPipelineExperiment(Experiment):
                                         feature not in train_known_features]
 
                     filter_recall_score = test_scoring(filter_not_train)
-                    filter_estimator_score = estimator_score(x, y, SVC(), filter_not_train)
+                    filter_estimator_score = estimator_score(x, y, SVC(), filter_selected_features)
                     filter_precision_score = test_precision_scoring(filter_not_train)
-
+                    print('filter {0}, filter score {1}, filter features {2}, '.format(filter_name,
+                                                                                       filter_estimator_score,
+                                                                                       filter_selected_features))
                     accumulated_info.append([filter_recall_score, filter_precision_score, filter_estimator_score,
                                              features_select, convert_to_str(filter_not_train),
                                              filter_name, ''])
+                # run pmelif
+                # alphas = [0.1, 0.3, 0.5, 0.7]
+                # for alpha in alphas:
+                #     scoring_function = LinearCombinationScoring([1, alpha],
+                #                                                 [ClassifierScoring('f1_macro'),
+                #                                                  RecallFeatureScoring(train_scoring)])
+                #     print('PMeLiF with alpha {0}'.format(alpha))
+                #     pmelif = PMeLiF(SVC(),
+                #                     scoring_function,
+                #                     select_k_best_abs(features_select), self.ensemble,
+                #                     points=self.points, delta=self.delta)
+                #
+                #     pmelif.fit(x, y)
+                #     pmelif_score_matrix = pmelif.pmelif_transform(x, y)
+                #
+                #     pmelif_selected_features = select_k_best_abs(len(known_features))(pmelif_score_matrix)
+                #     pmelif_not_train = [feature for feature in pmelif_selected_features if
+                #                         feature not in train_known_features]
+                #     pmelif_recall_score = test_scoring(pmelif_not_train)
+                #     pmelif_estimator_score = estimator_score(x, y, SVC(), pmelif_not_train)
+                #     pmelif_precision_score = test_precision_scoring(pmelif_not_train)
+                #     pmelif_best_point = pmelif.best_point_
+                #
+                #     accumulated_info.append([pmelif_recall_score, pmelif_precision_score, pmelif_estimator_score,
+                #                              features_select, convert_to_str(pmelif_not_train),
+                #                              'pmelif' + str(alpha), convert_to_str(pmelif_best_point)])
+                # run melif
+                print('MeLiF')
+                melif = PMeLiF(SVC(), ClassifierScoring('f1_macro'), select_k_best_abs(features_select), self.ensemble,
+                               points=self.points, delta=self.delta)
+
+                melif.fit(x, y)
+                melif_score_matrix = melif.pmelif_transform(x, y)
+
+                melif_selected_features = select_k_best_abs(len(known_features))(melif_score_matrix)
+                melif_not_train = [feature for feature in melif_selected_features if
+                                   feature not in train_known_features]
+
+                melif_recall_score = test_scoring(melif_not_train)
+                melif_estimator_score = estimator_score(x, y, SVC(), melif_selected_features)
+                melif_precision_score = test_precision_scoring(melif_not_train)
+                melif_best_point = melif.best_point_
+                print('melif best point {0}, melif score {1}, melif features {2}'.format(melif_best_point,
+                                                                                         melif_estimator_score,
+                                                                                         melif_selected_features))
+
+                accumulated_info.append([melif_recall_score, melif_precision_score, melif_estimator_score,
+                                         features_select, convert_to_str(melif_not_train),
+                                         'melif', convert_to_str(melif_best_point)])
+                print('------------------------------Feature {0} end'.format(features_select))
+            print('------------------------------Sample end')
+
         df = pd.DataFrame(data=accumulated_info,
                           columns=['recall_score', 'precision_score', 'estimator_score', 'features_number',
                                    'selected_features', 'model', 'points'])
@@ -173,14 +176,15 @@ class ExactPipelineExperiment(Experiment):
             UnivariateFilter(su_measure, select_k_best_abs(number_of_features)),
             UnivariateFilter(fechner_corr, select_k_best_abs(number_of_features)),
             UnivariateFilter(spearman_corr, select_k_best_abs(number_of_features)),
-            UnivariateFilter(pearson_corr, select_k_best_abs(number_of_features)),
+            # UnivariateFilter(pearson_corr, select_k_best_abs(number_of_features)),
             UnivariateFilter(information_gain, select_k_best_abs(number_of_features)),
-            UnivariateFilter(gini_index, select_k_best_abs(number_of_features)),
-            UnivariateFilter(chi2_measure_scaled, select_k_best_abs(number_of_features)),
-            UnivariateFilter(reliefF_measure, select_k_best_abs(number_of_features)),
-            UnivariateFilter(anova_measure_scaled, select_k_best_abs(number_of_features))
+            # UnivariateFilter(gini_index, select_k_best_abs(number_of_features)),
+            # UnivariateFilter(chi2_measure_scaled, select_k_best_abs(number_of_features)),
+            # UnivariateFilter(reliefF_measure, select_k_best_abs(number_of_features)),
+            # UnivariateFilter(anova_measure_scaled, select_k_best_abs(number_of_features))
         ]
-        filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
+        filter_names = ['su', 'fechner', 'spearman', 'igain']
+        # filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
         return univariate_filters, filter_names
 
     @staticmethod
