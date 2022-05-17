@@ -161,7 +161,7 @@ class PMeLiF(BaseWrapper):
             order = self._rng.permutation(self.n_filters)
             changed = False
             for f in order:
-                iteration_point_plus = best_point + delta[f]
+                iteration_point_plus = [min(p, 1) for p in best_point + delta[f]]
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_plus))
                 score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)
@@ -174,7 +174,7 @@ class PMeLiF(BaseWrapper):
                     changed = True
                     break
 
-                iteration_point_minus = max(list(best_point - delta[f]), list(np.zeros(len(best_point))))
+                iteration_point_minus = [max(p, 0) for p in best_point - delta[f]]
                 selected_features = cutting_rule(
                     np.dot(scores.T, iteration_point_minus))
                 score = self.scoring_function.measure(X, y, selected_features, self._estimator, self.cv)

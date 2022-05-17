@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 import numpy as np
 from ITMO_FS import UnivariateFilter
 
-from experiment import FullComparisonExperiment
+from experiment.ExactPipelineExperiment import ExactPipelineExperiment
 from pipeline import SingleRunPipeline
 
 # sys.path.insert(1, '/Users/dmitriish/PycharmProjects/masters/')
@@ -57,7 +57,7 @@ points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
 np.vstack((points, np.random.random_sample(size=(50, len(filters)))))
 # example of save_path '../results/{0}/pmelif_plots/'
-experiment = FullComparisonExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.05,
-                                      sample_size=sample_size)
+experiment = ExactPipelineExperiment(number_samples, baseline, filters, 10, save_path, points=points, delta=0.05,
+                                     sample_size=sample_size)
 # dataset madelon, madeline sample size 100. gina_agnostic, gina sample size 200. gina_prior, bioresponse doesn't matter.
 pipeline.run(experiment)

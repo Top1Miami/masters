@@ -1,3 +1,4 @@
+import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
@@ -61,6 +62,30 @@ def plot_no_std(df, path, score_field, max_features_select, palette=None):
         palette = ['red', 'blue']
     ax = sns.lineplot(x='features_number', y=score_field, hue='model',
                       data=df, ci=None, palette=palette)
+    ax.set_xticks(range(1, max_features_select + 1))
+    ax.set_ylim([0.0, None])
+    ax.set_xlim([1.0, None])
+    plt.grid()
+    plt.legend(bbox_to_anchor=(0.85, 1), loc=2, borderaxespad=0.)
+    plt.savefig(path)
+    plt.close()
+
+
+def plot_single(df, path, score_field):
+    ax = sns.lineplot(x='alpha', y=score_field,
+                      data=df, ci=None)
+    ax.set_xticks(np.arange(0, 1, 0.05))
+    ax.set_ylim([0.0, None])
+    ax.set_xlim([0.1, None])
+    plt.grid()
+    plt.legend(bbox_to_anchor=(0.85, 1), loc=2, borderaxespad=0.)
+    plt.savefig(path)
+    plt.close()
+
+
+def plot_no_std_no_color(df, path, score_field, max_features_select):
+    ax = sns.lineplot(x='features_number', y=score_field, hue='model',
+                      data=df, ci=None)
     ax.set_xticks(range(1, max_features_select + 1))
     ax.set_ylim([0.0, None])
     ax.set_xlim([1.0, None])

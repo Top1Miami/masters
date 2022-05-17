@@ -1,6 +1,7 @@
 import abc
 from enum import Enum
 
+import numpy as np
 from sklearn.model_selection import cross_val_score
 
 
@@ -51,7 +52,8 @@ class LinearCombinationScoring(ScoringFunction):
 
     def measure(self, X, y, selected_features, estimator, cv):
         return sum(
-            [scoring_function(X, y, selected_features, estimator, cv) for scoring_function in self.scoring_functions]
+            np.array([scoring_function.measure(X, y, selected_features, estimator, cv) for scoring_function in
+                      self.scoring_functions])
             *
             self.coefficients)
 
