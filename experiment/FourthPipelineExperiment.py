@@ -4,7 +4,10 @@ import numpy as np
 import pandas as pd
 from ITMO_FS import UnivariateFilter
 from ITMO_FS import fechner_corr
+from ITMO_FS import gini_index
 from ITMO_FS import information_gain
+from ITMO_FS import pearson_corr
+from ITMO_FS import reliefF_measure
 from ITMO_FS import spearman_corr
 from ITMO_FS import su_measure
 from sklearn.svm import SVC
@@ -14,6 +17,8 @@ from models import LinearCombinationScoring
 from models import PMeLiF
 from models.ScoringFunctions import ClassifierScoring
 from models.ScoringFunctions import RecallFeatureScoring
+from utils import anova_measure_scaled
+from utils import chi2_measure_scaled
 from utils import select_k_best_abs
 from utils.ComparisonUtils import convert_to_str
 from utils.ComparisonUtils import estimator_score
@@ -45,16 +50,19 @@ class FourthPipelineExperiment(Experiment):
     """
 
     def __init__(self, generated_samples_number, known_features_filter,
-                 ensemble, save_path, points=None, delta=0.2,
-                 known_train_features=10, sample_size=100):
+                 ensemble, save_path, alpha_start=0.1, alpha_end=1.1, alpha_delta=0.1,
+                 points=None, delta=0.2, known_train_features=10, sample_size=100):
         self.generated_samples_number = generated_samples_number
         self.known_features_filter = known_features_filter
         self.ensemble = ensemble
+        self.save_path = save_path
+        self.alpha_start = alpha_start
+        self.alpha_end = alpha_end
+        self.alpha_delta = alpha_delta
         self.points = points
         self.delta = delta
         self.known_train_features = known_train_features
         self.sample_size = sample_size
-        self.save_path = save_path
 
     def run(self, features, labels, file_name):
         print('Number of samples generated {0}, size of sample {1}'.format(self.generated_samples_number,
@@ -70,9 +78,9 @@ class FourthPipelineExperiment(Experiment):
                                                                                   self.sample_size)
 
         accumulated_info = []
-        alphas = np.arange(1, 10, 1)
+        alphas = np.arange(self.alpha_start, self.alpha_end, self.alpha_delta)
         univariate_filters, filter_names = FourthPipelineExperiment.algorithms(len(known_features))
-        for _ in range(self.generated_samples_number):
+        for sample_number in range(self.generated_samples_number):
             sample_indices_object = generate_sample(class_zero, class_first, count_zero, count_first)
             train_known_features, test_known_features = split_features(known_features, self.known_train_features)
 
@@ -112,9 +120,8 @@ class FourthPipelineExperiment(Experiment):
                                 points=self.points, delta=self.delta)
 
                 pmelif.fit(x, y)
-                pmelif_score_matrix = pmelif.pmelif_transform(x, y)
 
-                pmelif_selected_features = select_k_best_abs(len(known_features))(pmelif_score_matrix)
+                pmelif_selected_features = pmelif.selected_features_
                 pmelif_not_train = [feature for feature in pmelif_selected_features if
                                     feature not in train_known_features]
                 pmelif_recall_score = test_scoring(pmelif_not_train)
@@ -134,9 +141,8 @@ class FourthPipelineExperiment(Experiment):
                            points=self.points, delta=self.delta)
 
             melif.fit(x, y)
-            melif_score_matrix = melif.pmelif_transform(x, y)
 
-            melif_selected_features = select_k_best_abs(len(known_features))(melif_score_matrix)
+            melif_selected_features = melif.selected_features_
             melif_not_train = [feature for feature in melif_selected_features if
                                feature not in train_known_features]
 
@@ -152,7 +158,7 @@ class FourthPipelineExperiment(Experiment):
             accumulated_info.append([melif_recall_score, train_melif_recall_score,
                                      melif_precision_score, melif_estimator_score,
                                      convert_to_str(melif_not_train), 'melif', convert_to_str(melif_best_point)])
-            print('------------------------------Sample end')
+            print('------------------------------Sample {0} end'.format(sample_number))
 
         df = pd.DataFrame(data=accumulated_info,
                           columns=['recall_score', 'train_recall_score', 'precision_score', 'estimator_score',
@@ -193,15 +199,15 @@ class FourthPipelineExperiment(Experiment):
             UnivariateFilter(su_measure, select_k_best_abs(number_of_features)),
             UnivariateFilter(fechner_corr, select_k_best_abs(number_of_features)),
             UnivariateFilter(spearman_corr, select_k_best_abs(number_of_features)),
-            # UnivariateFilter(pearson_corr, select_k_best_abs(number_of_features)),
+            UnivariateFilter(pearson_corr, select_k_best_abs(number_of_features)),
             UnivariateFilter(information_gain, select_k_best_abs(number_of_features)),
-            # UnivariateFilter(gini_index, select_k_best_abs(number_of_features)),
-            # UnivariateFilter(chi2_measure_scaled, select_k_best_abs(number_of_features)),
-            # UnivariateFilter(reliefF_measure, select_k_best_abs(number_of_features)),
-            # UnivariateFilter(anova_measure_scaled, select_k_best_abs(number_of_features))
+            UnivariateFilter(gini_index, select_k_best_abs(number_of_features)),
+            UnivariateFilter(chi2_measure_scaled, select_k_best_abs(number_of_features)),
+            UnivariateFilter(reliefF_measure, select_k_best_abs(number_of_features)),
+            UnivariateFilter(anova_measure_scaled, select_k_best_abs(number_of_features))
         ]
-        filter_names = ['su', 'fechner', 'spearman', 'igain']
-        # filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
+        # filter_names = ['su', 'fechner', 'spearman', 'igain']
+        filter_names = ['su', 'fechner', 'spearman', 'pearson', 'igain', 'gini', 'chi2', 'reliefF', 'anova']
         return univariate_filters, filter_names
 
     @staticmethod

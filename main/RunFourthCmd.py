@@ -30,6 +30,16 @@ parser.add_argument('-mf', '--melif_filters', nargs='+',
 parser.add_argument('-ss', '--sample_size',
                     help='sample size',
                     default=100)
+parser.add_argument('-as', '--alpha_start',
+                    help='alpha_start',
+                    default=0.1)
+parser.add_argument('-ae', '--alpha_end',
+                    help='alpha_end',
+                    default=1.1)
+parser.add_argument('-ad', '--alpha_delta',
+                    help='alpha_delta',
+                    default=0.1)
+
 print(sys.argv)
 
 args = parser.parse_args()
@@ -39,6 +49,9 @@ save_path = args.save_path
 baseline = args.baseline
 melif_filters = args.melif_filters
 sample_size = int(args.sample_size)
+alpha_start = float(args.alpha_start)
+alpha_end = float(args.alpha_end)
+alpha_delta = float(args.alpha_delta)
 
 pipeline = SingleRunPipeline(file_name)
 filters = [UnivariateFilter(filter_name) for filter_name in melif_filters]
@@ -52,9 +65,10 @@ for i in range(1, len(filters)):
     points = np.vstack((points, point))
 points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
-np.vstack((points, np.random.random_sample(size=(10, len(filters)))))
+np.vstack((points, np.random.random_sample(size=(20, len(filters)))))
 # example of save_path '../results/{0}/pmelif_plots/'
-experiment = FourthPipelineExperiment(number_samples, baseline, filters, save_path, points=points, delta=0.05,
-                                      sample_size=sample_size)
+experiment = FourthPipelineExperiment(number_samples, baseline, filters, save_path, points=points, delta=0.1,
+                                      sample_size=sample_size, alpha_start=alpha_start, alpha_end=alpha_end,
+                                      alpha_delta=alpha_delta)
 # dataset madelon, madeline sample size 100. gina_agnostic, gina sample size 200. gina_prior, bioresponse doesn't matter.
 pipeline.run(experiment)
