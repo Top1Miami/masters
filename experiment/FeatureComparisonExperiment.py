@@ -129,10 +129,9 @@ class FeatureComparisonExperiment(Experiment):
 
         distance_dump = FeatureComparisonExperiment.count_distances(distances)
 
-        file_number = file_name[:-4]
-        if not os.path.exists('../results/' + file_number + '/distance/'):
-            os.makedirs('../results/' + file_number + '/distance/')
-        distance_dump.to_csv('../results/' + file_number + '/distance/distance_dump.csv')
+        if not os.path.exists('../results/' + file_name + '/distance_v2/'):
+            os.makedirs('../results/' + file_name + '/distance_v2/')
+        distance_dump.to_csv('../results/' + file_name + '/distance_v2/distance_dump.csv')
 
     @staticmethod
     def count_distances(distances):
@@ -257,12 +256,14 @@ class FeatureComparisonExperiment(Experiment):
             else:
                 plt.plot(values, marker='o', color=color)
         plt.legend()
+        ax = plt.gca()
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels([FeatureComparisonExperiment.filter_names[i], FeatureComparisonExperiment.filter_names[j]])
 
-        subname = file_name[:-4]
-        if not os.path.exists('../results/' + subname + '/feature_plots/'):
-            os.makedirs('../results/' + subname + '/feature_plots/')
+        if not os.path.exists('../results/' + file_name + '/feature_plots_v2/'):
+            os.makedirs('../results/' + file_name + '/feature_plots_v2/')
         plt.savefig(
-            '../results/' + subname + '/feature_plots/' + FeatureComparisonExperiment.filter_names[i]
+            '../results/' + file_name + '/feature_plots_v2/' + FeatureComparisonExperiment.filter_names[i]
             + FeatureComparisonExperiment.filter_names[j] + '.png'
         )
         plt.close(fig)
