@@ -13,7 +13,6 @@ from ITMO_FS import su_measure
 from sklearn.svm import SVC
 
 from experiment import Experiment
-from models import LinearCombinationScoring
 from models import PMeLiF
 from models.ScoringFunctions import ClassifierScoring
 from models.ScoringFunctions import RecallFeatureScoring
@@ -109,31 +108,33 @@ class FourthPipelineExperiment(Experiment):
                                          filter_precision_score, filter_estimator_score,
                                          convert_to_str(filter_not_train), filter_name, ''])
             # run pmelif
-            for alpha in alphas:
-                scoring_function = LinearCombinationScoring([1, alpha],
-                                                            [ClassifierScoring('f1_macro'),
-                                                             RecallFeatureScoring(train_scoring)])
-                print('PMeLiF with alpha {0}'.format(alpha))
-                pmelif = PMeLiF(SVC(),
-                                scoring_function,
-                                select_k_best_abs(len(known_features)), self.ensemble,
-                                points=self.points, delta=self.delta)
+            # for alpha in alphas:
+            # scoring_function = LinearCombinationScoring([1, alpha],
+            #                                             [ClassifierScoring('f1_macro'),
+            #                                              RecallFeatureScoring(train_scoring)])
+            scoring_function = RecallFeatureScoring(train_scoring)
+            # print('PMeLiF with alpha {0}'.format(alpha))
+            pmelif = PMeLiF(SVC(),
+                            scoring_function,
+                            select_k_best_abs(len(known_features)), self.ensemble,
+                            points=self.points, delta=self.delta)
 
-                pmelif.fit(x, y)
+            pmelif.fit(x, y)
 
-                pmelif_selected_features = pmelif.selected_features_
-                pmelif_not_train = [feature for feature in pmelif_selected_features if
-                                    feature not in train_known_features]
-                pmelif_recall_score = test_scoring(pmelif_not_train)
-                train_pmelif_recall_score = train_scoring(pmelif_selected_features)
-                pmelif_estimator_score = estimator_score(x, y, SVC(), pmelif_not_train)
-                pmelif_precision_score = test_precision_scoring(pmelif_not_train)
-                pmelif_best_point = pmelif.best_point_
+            pmelif_selected_features = pmelif.selected_features_
+            pmelif_not_train = [feature for feature in pmelif_selected_features if
+                                feature not in train_known_features]
+            pmelif_recall_score = test_scoring(pmelif_not_train)
+            train_pmelif_recall_score = train_scoring(pmelif_selected_features)
+            pmelif_estimator_score = estimator_score(x, y, SVC(), pmelif_not_train)
+            pmelif_precision_score = test_precision_scoring(pmelif_not_train)
+            pmelif_best_point = pmelif.best_point_
 
-                accumulated_info.append([pmelif_recall_score, train_pmelif_recall_score,
-                                         pmelif_precision_score, pmelif_estimator_score,
-                                         convert_to_str(pmelif_not_train), 'pmelif' + str(round(alpha, 2)),
-                                         convert_to_str(pmelif_best_point)])
+            accumulated_info.append([pmelif_recall_score, train_pmelif_recall_score,
+                                     pmelif_precision_score, pmelif_estimator_score,
+                                     # convert_to_str(pmelif_not_train), 'pmelif' + str(round(alpha, 2)),
+                                     convert_to_str(pmelif_not_train), 'pmelif',
+                                     convert_to_str(pmelif_best_point)])
             # run melif
             print('MeLiF')
             melif = PMeLiF(SVC(), ClassifierScoring('f1_macro'), select_k_best_abs(len(known_features)),
@@ -167,7 +168,8 @@ class FourthPipelineExperiment(Experiment):
         if not os.path.exists(self.save_path.format(subname)):
             os.makedirs(self.save_path.format(subname))
 
-        model_names = ['melif'] + ['pmelif' + str(round(alpha, 2)) for alpha in alphas] + filter_names
+        # model_names = ['melif'] + ['pmelif' + str(round(alpha, 2)) for alpha in alphas] + filter_names
+        model_names = ['melif'] + ['pmelif'] + filter_names
         stats = []
         for model_name in model_names:
             melif_df = df.loc[df['model'] == model_name]

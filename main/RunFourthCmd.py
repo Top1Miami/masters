@@ -65,7 +65,7 @@ for i in range(1, len(filters)):
     points = np.vstack((points, point))
 points = np.vstack((points, np.zeros(len(filters))))
 points = np.vstack((points, np.ones(len(filters))))
-points = np.vstack((points, np.random.random_sample(size=(20, len(filters)))))
+points = np.vstack((points, np.random.random_sample(size=(200, len(filters)))))
 # example of save_path '../results/{0}/pmelif_plots/'
 experiment = FourthPipelineExperiment(number_samples, baseline, filters, save_path, points=points, delta=0.1,
                                       sample_size=sample_size, alpha_start=alpha_start, alpha_end=alpha_end,
